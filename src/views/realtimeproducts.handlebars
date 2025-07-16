@@ -1,64 +1,57 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real Time Products</title>
-  <script src="/socket.io/socket.io.js"></script>
-</head>
-<body>
-  <h1>Productos en Tiempo Real</h1>
-  <ul id="product-list">
-    {{#each products}}
-      <li id="product-{{this.id}}">
-        {{this.title}} - ${{this.price}}
-        <button onclick="deleteProduct({{this.id}})">Eliminar</button>
-      </li>
-    {{/each}}
-  </ul>
+<h1>Productos en Tiempo Real</h1>
 
-  <h3>Agregar Producto</h3>
-  <form id="addProductForm">
-    <input type="text" id="productTitle" placeholder="Título" required>
-    <input type="number" id="productPrice" placeholder="Precio" required>
-    <button type="submit">Agregar</button>
-  </form>
+<ul id="product-list">
+  {{#each products}}
+    <li id="product-{{this._id}}">
+      {{this.title}} - ${{this.price}}
+      <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
+    </li>
+  {{else}}
+    <li>No hay productos disponibles.</li>
+  {{/each}}
+</ul>
 
-  <script>
-    const socket = io();
+<h3>Agregar Producto</h3>
+<form id="addProductForm">
+  <input type="text" id="productTitle" placeholder="Título" required>
+  <input type="number" id="productPrice" placeholder="Precio" required>
+  <button type="submit">Agregar</button>
+</form>
 
-    socket.on('updateProducts', (products) => {
-      const productList = document.getElementById('product-list');
-      productList.innerHTML = '';
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
 
-      products.forEach(product => {
-        const li = document.createElement('li');
-        li.id = 'product-' + product.id;
-        li.innerHTML = `${product.title} - $${product.price}
-                        <button onclick="deleteProduct(${product.id})">Eliminar</button>`;
-        productList.appendChild(li);
-      });
+  socket.on('updateProducts', (products) => {
+    const productList = document.getElementById('product-list');
+    productList.innerHTML = '';
+
+    products.forEach(product => {
+      const li = document.createElement('li');
+      li.id = 'product-' + product._id;
+      li.innerHTML = `
+        ${product.title} - $${product.price}
+        <button onclick="deleteProduct('${product._id}')">Eliminar</button>
+      `;
+      productList.appendChild(li);
     });
+  });
 
-    document.getElementById('addProductForm').addEventListener('submit', (event) => {
-      event.preventDefault();
+  document.getElementById('addProductForm').addEventListener('submit', (event) => {
+    event.preventDefault();
 
-      const title = document.getElementById('productTitle').value;
-      const price = document.getElementById('productPrice').value;
+    const title = document.getElementById('productTitle').value.trim();
+    const price = parseFloat(document.getElementById('productPrice').value);
 
-      const newProduct = {
-        id: Math.floor(Math.random() * 10000),
-        title,
-        price
-      };
-
-      socket.emit('addProduct', newProduct);
-    });
-
-    function deleteProduct(productId) {
-      socket.emit('deleteProduct', productId);
+    if (title && !isNaN(price)) {
+      socket.emit('addProduct', { title, price });
+      event.target.reset();
     }
-  </script>
-</body>
-</html>
+  });
+
+  function deleteProduct(productId) {
+    socket.emit('deleteProduct', productId);
+  }
+</script>
+
 

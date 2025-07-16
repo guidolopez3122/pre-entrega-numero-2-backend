@@ -1,25 +1,26 @@
 import { Router } from 'express';
-import fs from 'fs';
+import Product from '../models/product.model.js';
 
 const viewsRouter = Router();
 
-const getProducts = async () => {
-  try {
-    const productsData = await fs.promises.readFile('src/db/products.json', 'utf-8');
-    return JSON.parse(productsData);
-  } catch (error) {
-    return [];
-  }
-};
-
 viewsRouter.get('/', async (req, res) => {
-  const products = await getProducts();
-  res.render('home', { products });
+  try {
+    const products = await Product.find();
+    res.render('home', { products });
+  } catch (error) {
+    res.status(500).send('Error cargando productos');
+  }
 });
 
 viewsRouter.get('/realtimeproducts', async (req, res) => {
-  const products = await getProducts();
-  res.render('realTimeProducts', { products });
+  try {
+    const products = await Product.find();
+    res.render('realtimeproducts', { products });
+  } catch (error) {
+    res.status(500).send('Error cargando productos');
+  }
 });
 
 export default viewsRouter;
+
+

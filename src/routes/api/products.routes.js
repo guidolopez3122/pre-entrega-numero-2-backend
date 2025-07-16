@@ -1,40 +1,20 @@
 import { Router } from 'express';
-import fs from 'fs';
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} from '../../controllers/productController.js';
 
-const productsRouter = Router();
+const router = Router();
 
-const getProducts = async () => {
-  try {
-    const products = await fs.promises.readFile('src/db/products.json', 'utf-8');
-    return JSON.parse(products);
-  } catch (error) {
-    return [];
-  }
-};
+router.get('/', getProducts);
+router.get('/:pid', getProductById);
+router.post('/', createProduct);
+router.put('/:pid', updateProduct);
+router.delete('/:pid', deleteProduct);
 
-productsRouter.get('/', async (req, res) => {
-  const products = await getProducts();
-  res.json({ products });
-});
+export default router;
 
-productsRouter.post('/', async (req, res) => {
-  const newProduct = req.body;
 
-  if (!newProduct.title || !newProduct.description || !newProduct.price) {
-    return res.status(400).json({ status: 'Error', message: 'Producto incompleto' });
-  }
-
-  const products = await getProducts();
-  newProduct.id = products.length + 1;
-
-  products.push(newProduct);
-
-  try {
-    await fs.promises.writeFile('src/db/products.json', JSON.stringify(products, null, 2));
-    res.status(201).json({ status: 'Ok', message: 'Producto añadido', product: newProduct });
-  } catch (error) {
-    res.status(500).json({ status: 'Error', message: 'No se pudo agregar el producto' });
-  }
-});
-
-export default productsRouter;
